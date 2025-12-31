@@ -4,7 +4,6 @@ package product;
 
 service ProductService {
   rpc GetProductById (GetProductRequest) returns (ProductResponse);
-  rpc Health (HealthRequest) returns (HealthResponse);
 }
 
 message GetProductRequest {

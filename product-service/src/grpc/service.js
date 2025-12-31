@@ -1,15 +1,18 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
-const mongoose = require("mongoose");
+// const health = require("grpc-health-check");
 const Product = require("../models/Product");
 
+const { HealthImplementation, service: healthService } = require("grpc-health-check");
 const packageDef = protoLoader.loadSync("proto/product.proto");
 const productProto = grpc.loadPackageDefinition(packageDef).product;
 
 const server = new grpc.Server();
 
+/* -----------------
+   Product gRPC Service
+------------------ */
 server.addService(productProto.ProductService.service, {
-  // 🔹 Existing method
   GetProductById: async (call, callback) => {
     try {
       const product = await Product.findById(call.request.productId);
@@ -31,20 +34,22 @@ server.addService(productProto.ProductService.service, {
         message: err.message
       });
     }
-  },
-
-  // 🟢 NEW: gRPC Health Check
-  Health: (call, callback) => {
-    const dbState =
-      mongoose.connection.readyState === 1 ? "Connected" : "Disconnected";
-
-    callback(null, {
-      status: "UP",
-      db: dbState
-    });
   }
 });
 
+// -----------------
+// Standard gRPC Health (v2.1.0 syntax)
+// -----------------
+const healthImpl = new HealthImplementation({
+  "": "SERVING",
+  "product.ProductService": "SERVING" // Add your actual service name
+});
+
+// Register health service using the exported service definition
+server.addService(healthService, healthImpl);
+/* -----------------
+   Start Server
+------------------ */
 server.bindAsync(
   "0.0.0.0:50052",
   grpc.ServerCredentials.createInsecure(),

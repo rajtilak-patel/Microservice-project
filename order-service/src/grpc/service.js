@@ -1,6 +1,6 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
-const mongoose = require("mongoose");
+const { HealthImplementation, service: healthService } = require("grpc-health-check");
 const Order = require("../models/Order");
 
 const userClient = require("./clients/userClient");
@@ -11,8 +11,10 @@ const orderProto = grpc.loadPackageDefinition(def).order;
 
 const server = new grpc.Server();
 
+/* -----------------
+   Order gRPC Service
+------------------ */
 server.addService(orderProto.OrderService.service, {
-  // 🔹 Existing CreateOrder
   CreateOrder: (call, callback) => {
     userClient.GetUserById({ userId: call.request.userId }, (err, user) => {
       if (err) {
@@ -53,24 +55,31 @@ server.addService(orderProto.OrderService.service, {
         }
       );
     });
-  },
-
-  // 🟢 NEW: gRPC Health Check
-  Health: (call, callback) => {
-    const dbState =
-      mongoose.connection.readyState === 1 ? "Connected" : "Disconnected";
-
-    callback(null, {
-      status: "UP",
-      db: dbState
-    });
   }
 });
 
+// -----------------
+// Standard gRPC Health (v2.1.0 syntax)
+// -----------------
+const healthImpl = new HealthImplementation({
+  "": "SERVING",
+  "order.OrderService": "SERVING" // Add your actual service name
+});
+
+// Register health service using the exported service definition
+server.addService(healthService, healthImpl);
+
+/* -----------------
+   Start Server
+------------------ */
 server.bindAsync(
   "0.0.0.0:50053",
   grpc.ServerCredentials.createInsecure(),
-  () => {
+  (error, port) => {
+    if (error) {
+      console.error("Failed to bind server:", error);
+      return;
+    }
     console.log("Order gRPC server running on port 50053");
     server.start();
   }

@@ -4,7 +4,6 @@ package user;
 
 service UserService {
   rpc GetUserById(UserIdRequest) returns (UserResponse);
-  rpc health(HealthRequest) returns (HealthResponse);  // Add this
 }
 
 message UserIdRequest {
