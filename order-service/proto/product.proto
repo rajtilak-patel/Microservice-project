@@ -3,10 +3,11 @@ syntax = "proto3";
 package product;
 
 service ProductService {
-  rpc GetProductById (ProductRequest) returns (ProductResponse);
+  rpc GetProductById (GetProductRequest) returns (ProductResponse);
+  rpc Health (HealthRequest) returns (HealthResponse);
 }
 
-message ProductRequest {
+message GetProductRequest {
   string productId = 1;
 }
 
@@ -14,4 +15,11 @@ message ProductResponse {
   string id = 1;
   string name = 2;
   double price = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+  string db = 2;
 }
