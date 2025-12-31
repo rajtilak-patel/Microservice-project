@@ -3,10 +3,11 @@ syntax = "proto3";
 package user;
 
 service UserService {
-  rpc GetUserById (UserRequest) returns (UserResponse);
+  rpc GetUserById(UserIdRequest) returns (UserResponse);
+  rpc health(HealthRequest) returns (HealthResponse);  // Add this
 }
 
-message UserRequest {
+message UserIdRequest {
   string userId = 1;
 }
 
@@ -14,4 +15,10 @@ message UserResponse {
   string id = 1;
   string name = 2;
   string email = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;  // e.g. "SERVING"
 }
