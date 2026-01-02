@@ -13,12 +13,13 @@ services:
     build: ./user-service
     container_name: user-service
     volumes:
-      - ./user-service:/app       # Mount code for hot reload
+      - ./user-service:/app
       - /app/node_modules
     ports:
       - "3001:3001"
       - "50051:50051"
-      - "9229:9229"              # Debug port
+      - "9100:9100"        # 🔥 Prometheus metrics
+      - "9229:9229"
     depends_on:
       - mongo
     environment:
@@ -33,7 +34,8 @@ services:
     ports:
       - "3002:3002"
       - "50052:50052"
-      - "9228:9228"              # Debug port (unique per service)
+      - "9101:9100"        # 🔥 Prometheus metrics
+      - "9228:9228"
     depends_on:
       - mongo
     environment:
@@ -48,13 +50,29 @@ services:
     ports:
       - "3003:3003"
       - "50053:50053"
-      - "9230:9230"              # Debug port
+      - "9102:9100"        # 🔥 Prometheus metrics
+      - "9230:9230"
     depends_on:
       - mongo
       - user-service
       - product-service
     environment:
       NODE_ENV: development
+
+  # 🔥 PROMETHEUS
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
 
 volumes:
   mongo_data:

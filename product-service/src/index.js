@@ -2,7 +2,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const productRoutes = require("./routes/product.route");
-
+const logger = require("./logger");
+const { client, httpRequestCounter } = require("./matrics");
 // 🔹 gRPC server start (important)
 require("./grpc/service");
 
@@ -11,6 +12,14 @@ app.use(express.json());
 
 // 🟢 Product APIs
 app.use("/api/products", productRoutes);
+
+
+// 🔹 Logging middleware
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url}`);
+  next();
+});
+
 
 // 🟢 HEALTH CHECK API (NEW)
 app.get("/health", (req, res) => {
@@ -25,6 +34,12 @@ app.get("/health", (req, res) => {
   });
 });
 
+// 🔹 Metrics endpoint (IMPORTANT)
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});
+
 // 🔹 MongoDB connection
 mongoose
   .connect(
@@ -36,4 +51,5 @@ mongoose
 // 🔹 REST server
 app.listen(3002, () => {
   console.log("Product Service REST running on port 3002");
+  logger.info("Product Service REST running on port 3002");
 });

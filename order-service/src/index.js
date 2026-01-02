@@ -1,7 +1,8 @@
 // order-service/src/index.js
 const express = require("express");
 const mongoose = require("mongoose");
-
+const logger = require("./logger");
+const { client, httpRequestCounter } = require("./matrics");
 // 🔹 gRPC server start
 require("./grpc/service");
 
@@ -12,6 +13,12 @@ app.use(express.json());
 
 // 🟢 Order APIs
 app.use("/api/orders", orderRoutes);
+
+// 🔹 Logging middleware
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url}`);
+  next();
+});
 
 // 🟢 HEALTH CHECK API
 app.get("/health", (req, res) => {
@@ -26,6 +33,14 @@ app.get("/health", (req, res) => {
   });
 });
 
+
+// 🔹 Metrics endpoint (IMPORTANT)
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});
+
+
 // 🔹 MongoDB connection
 mongoose
   .connect(
@@ -37,4 +52,5 @@ mongoose
 // 🔹 REST server
 app.listen(3003, () => {
   console.log("Order Service REST running on port 3003");
+  logger.info("Order Service REST running on port 3003");
 });
