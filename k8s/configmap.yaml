@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: common-config
+data:
+  NODE_ENV: production
+  PORT_USER: "5000"
+  PORT_PRODUCT: "5001"
+  PORT_ORDER: "5002"
